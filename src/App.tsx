@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence, useDragControls } from "framer-motion";
-import { Camera, Download, Trash2, PenLine, RefreshCw, X, Check, Settings as SettingsIcon } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Download, Trash2, PenLine, RefreshCw, X, Check, Settings as SettingsIcon } from "lucide-react";
 import html2canvas from "html2canvas";
-import clsx from "clsx";
 
 // Types
 interface Photo {
@@ -29,8 +28,6 @@ const DEFAULT_SETTINGS: AISettings = {
 	model: "gpt-4o",
 };
 
-// Shutter Sound (Base64 for portability)
-const SHUTTER_SOUND_URL = "data:audio/wav;base64,UklGRiQAABXWAABfmt"; // Placeholder
 const playShutterSound = () => {
 	try {
 		const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -56,7 +53,6 @@ const CAMERA_IMG_URL = "https://s.baoyu.io/images/retro-camera.webp";
 
 export default function App() {
 	const [photos, setPhotos] = useState<Photo[]>([]);
-	const [stream, setStream] = useState<MediaStream | null>(null);
 	const videoRef = useRef<HTMLVideoElement>(null);
 
 	const [settings, setSettings] = useState<AISettings>(DEFAULT_SETTINGS);
@@ -90,7 +86,6 @@ export default function App() {
 				const mediaStream = await navigator.mediaDevices.getUserMedia({
 					video: { facingMode: "user", width: 640, height: 640 },
 				});
-				setStream(mediaStream);
 				if (videoRef.current) {
 					videoRef.current.srcObject = mediaStream;
 				}
@@ -213,17 +208,6 @@ export default function App() {
 
 	const updatePhotoCaption = (id: string, caption: string) => {
 		setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, caption } : p)));
-	};
-
-	const handleDragEnd = (id: string, point: { x: number; y: number }) => {
-		setPhotos((prev) =>
-			prev.map((p) => {
-				if (p.id === id) {
-					return { ...p, x: point.x, y: point.y };
-				}
-				return p;
-			})
-		);
 	};
 
 	return (
