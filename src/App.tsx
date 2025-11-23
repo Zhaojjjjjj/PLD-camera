@@ -68,8 +68,6 @@ export default function App() {
 			} catch (e) {
 				console.error("Failed to parse settings", e);
 			}
-		} else {
-			setShowSettings(true);
 		}
 	}, []);
 
@@ -213,10 +211,10 @@ export default function App() {
 	return (
 		<div className="relative w-screen h-screen overflow-hidden bg-gray-100 font-hand text-gray-800 selection:bg-yellow-200">
 			{/* Title */}
-			<h1 className="absolute top-8 left-1/2 -translate-x-1/2 text-4xl font-bold tracking-wider text-gray-700 opacity-80 z-10">Jacob PLD Camera</h1>
+			<h1 className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 text-2xl md:text-4xl font-bold tracking-wider text-gray-700 opacity-80 z-10 w-full text-center">Jacob PLD Camera</h1>
 
 			{/* Instructions */}
-			<div className="absolute bottom-8 right-8 text-right opacity-60 max-w-xs text-lg pointer-events-none z-0">
+			<div className="absolute bottom-8 right-8 text-right opacity-60 max-w-xs text-lg pointer-events-none z-0 hidden md:block">
 				<p>1. Allow Camera Access</p>
 				<p>2. Click the round button to snap</p>
 				<p>3. Drag photo to the wall</p>
@@ -224,7 +222,7 @@ export default function App() {
 			</div>
 
 			{/* Settings Button */}
-			<button onClick={() => setShowSettings(true)} className="absolute top-8 right-8 z-40 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors text-gray-600" title="AI Settings">
+			<button onClick={() => setShowSettings(true)} className="absolute top-4 right-4 md:top-8 md:right-8 z-40 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors text-gray-600" title="AI Settings">
 				<SettingsIcon size={20} />
 			</button>
 
@@ -237,14 +235,7 @@ export default function App() {
 			))}
 
 			{/* Camera Container */}
-			<div
-				className="fixed z-20"
-				style={{
-					bottom: "64px",
-					left: "64px",
-					width: "450px",
-					height: "450px",
-				}}>
+			<div className="fixed z-20 bottom-8 left-1/2 -translate-x-1/2 w-[90vw] max-w-[400px] aspect-square md:w-[450px] md:h-[450px] md:left-16 md:bottom-16 md:translate-x-0">
 				{/* Viewfinder Mask */}
 				<div
 					className="absolute overflow-hidden z-30 pointer-events-none bg-black"
@@ -338,14 +329,15 @@ function PhotoCard({ photo, setPhotos, settings, highestZ, setHighestZ, onRegene
 	const [editText, setEditText] = useState(photo.caption);
 	const cardRef = useRef<HTMLDivElement>(null);
 
-	const cameraBottom = 64;
-	const cameraLeft = 64;
-	const cameraSize = 450;
+	const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+	const cameraSize = isMobile ? Math.min(window.innerWidth * 0.9, 400) : 450;
+	const cameraBottom = isMobile ? 32 : 64;
+
 	const photoWidth = cameraSize * 0.35; // ~157.5px
 	const photoHeight = photoWidth * (4 / 3); // ~210px
 
 	// Center X of camera
-	const startX = cameraLeft + cameraSize / 2 - photoWidth / 2;
+	const startX = isMobile ? window.innerWidth / 2 - photoWidth / 2 : 64 + cameraSize / 2 - photoWidth / 2;
 	// Top of camera
 	const startY = window.innerHeight - cameraBottom - cameraSize;
 
