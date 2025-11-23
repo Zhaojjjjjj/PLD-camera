@@ -49,7 +49,7 @@ const playShutterSound = () => {
 	}
 };
 
-const CAMERA_IMG_URL = "https://s.baoyu.io/images/retro-camera.webp";
+const CAMERA_IMG_URL = "/camera.webp";
 
 export default function App() {
 	const [photos, setPhotos] = useState<Photo[]>([]);
