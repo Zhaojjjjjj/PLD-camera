@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Trash2, PenLine, RefreshCw, X, Check, Settings as SettingsIcon } from "lucide-react";
+import { Download, Trash2, PenLine, RefreshCw, X, Check, Settings as SettingsIcon, MoveDiagonal } from "lucide-react";
 import html2canvas from "html2canvas";
 
 // Types
@@ -14,6 +14,7 @@ interface Photo {
 	y: number;
 	rotation: number;
 	zIndex: number;
+	width?: number;
 }
 
 interface AISettings {
@@ -141,6 +142,7 @@ export default function App() {
 			y: 0,
 			rotation: (Math.random() - 0.5) * 10,
 			zIndex: highestZ + 1,
+			width: sWidth ? sWidth * 0.35 : undefined, // Optional initial width hint
 		};
 
 		setHighestZ((prev) => prev + 1);
@@ -333,13 +335,33 @@ function PhotoCard({ photo, setPhotos, settings, highestZ, setHighestZ, onRegene
 	const cameraSize = isMobile ? Math.min(window.innerWidth * 0.9, 400) : 450;
 	const cameraBottom = isMobile ? 32 : 64;
 
-	const photoWidth = cameraSize * 0.35; // ~157.5px
-	const photoHeight = photoWidth * (4 / 3); // ~210px
+	// Default or Custom width
+	const currentWidth = photo.width || cameraSize * 0.35;
+	const currentHeight = currentWidth * (4 / 3);
 
 	// Center X of camera
-	const startX = isMobile ? window.innerWidth / 2 - photoWidth / 2 : 64 + cameraSize / 2 - photoWidth / 2;
+	const startX = isMobile ? window.innerWidth / 2 - currentWidth / 2 : 64 + cameraSize / 2 - currentWidth / 2;
 	// Top of camera
 	const startY = window.innerHeight - cameraBottom - cameraSize;
+
+	const handleResize = (e: React.PointerEvent) => {
+		e.stopPropagation(); // Prevent drag on parent
+		const startX = e.clientX;
+		const startWidth = currentWidth;
+
+		const onPointerMove = (moveEvent: PointerEvent) => {
+			const newWidth = Math.max(100, startWidth + (moveEvent.clientX - startX));
+			setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, width: newWidth } : p)));
+		};
+
+		const onPointerUp = () => {
+			window.removeEventListener("pointermove", onPointerMove);
+			window.removeEventListener("pointerup", onPointerUp);
+		};
+
+		window.addEventListener("pointermove", onPointerMove);
+		window.addEventListener("pointerup", onPointerUp);
+	};
 
 	const handleDownload = async () => {
 		if (!cardRef.current) return;
@@ -392,7 +414,7 @@ function PhotoCard({ photo, setPhotos, settings, highestZ, setHighestZ, onRegene
 			}}
 			animate={{
 				x: photo.x || startX,
-				y: photo.y || startY - photoHeight * 0.4,
+				y: photo.y || startY - currentHeight * 0.4,
 				opacity: 1,
 				scale: 1,
 				rotate: photo.rotation,
@@ -406,8 +428,8 @@ function PhotoCard({ photo, setPhotos, settings, highestZ, setHighestZ, onRegene
 			}}
 			className="absolute flex flex-col items-center bg-white p-3 shadow-xl transition-shadow duration-300 hover:shadow-2xl"
 			style={{
-				width: `${photoWidth}px`,
-				minHeight: `${photoHeight + 60}px`,
+				width: `${currentWidth}px`,
+				minHeight: `${currentHeight + 60}px`,
 				paddingBottom: "1rem",
 				cursor: "grab",
 			}}>
@@ -482,6 +504,11 @@ function PhotoCard({ photo, setPhotos, settings, highestZ, setHighestZ, onRegene
 						</div>
 					</div>
 				)}
+			</div>
+
+			{/* Resize Handle */}
+			<div className="absolute bottom-0 right-0 p-1 cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity" onPointerDown={handleResize}>
+				<MoveDiagonal size={16} className="text-gray-400 hover:text-gray-800" />
 			</div>
 		</motion.div>
 	);
