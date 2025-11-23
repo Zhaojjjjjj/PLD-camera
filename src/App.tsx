@@ -81,16 +81,46 @@ export default function App() {
 	// Initialize Camera
 	useEffect(() => {
 		async function setupCamera() {
+			// Check for HTTPS/Secure Context
+			if (window.location.hostname !== "localhost" && window.location.protocol !== "https:") {
+				alert("Camera requires HTTPS. Please use a secure connection.");
+				return;
+			}
+
 			try {
-				const mediaStream = await navigator.mediaDevices.getUserMedia({
-					video: { facingMode: "user", width: 640, height: 640 },
-				});
+				// Use 'ideal' constraints for better mobile compatibility
+				const constraints = {
+					video: {
+						facingMode: "user",
+						width: { ideal: 640 },
+						height: { ideal: 640 },
+					},
+					audio: false,
+				};
+
+				const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
 				if (videoRef.current) {
 					videoRef.current.srcObject = mediaStream;
+					// Explicitly call play() which is sometimes needed on mobile
+					videoRef.current.play().catch((e) => console.error("Play error:", e));
 				}
-			} catch (err) {
+			} catch (err: any) {
 				console.error("Error accessing camera:", err);
-				alert("Could not access camera. Please allow permissions.");
+				// Provide more specific error messages for WeChat debugging
+				let msg = "Could not access camera.";
+				if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+					msg = "Camera permission denied. Please allow access in browser/WeChat settings.";
+				} else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+					msg = "No camera found.";
+				} else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+					msg = "Camera is in use by another app.";
+				} else if (err.name === "OverconstrainedError") {
+					msg = "Camera doesn't support required resolution.";
+				} else if (typeof err === "string") {
+					msg = err;
+				}
+				alert(`${msg}\n(${err.name}: ${err.message})`);
 			}
 		}
 		setupCamera();
